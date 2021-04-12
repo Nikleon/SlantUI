@@ -1,8 +1,17 @@
 package com.sprutuswesticus;
 
-public class Update implements java.io.Serializable{
-    public int id;
-    public int x;
-    public int y;
-    public int orientation;
+import java.io.Serializable;
+
+public class Update implements Serializable {
+    private static final long serialVersionUID = 2585894887518553527L;
+
+    public final int r;
+    public final int c;
+    public final int orientation;
+
+    public Update(int r, int c, int orientation) {
+        this.r = r;
+        this.c = c;
+        this.orientation = orientation;
+    }
 }
