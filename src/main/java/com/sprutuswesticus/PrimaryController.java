@@ -3,6 +3,7 @@ package com.sprutuswesticus;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
+import com.sprutuswesticus.network.ClientSession;
 import com.sprutuswesticus.network.NetworkConfig;
 import com.sprutuswesticus.network.ServerSession;
 import com.sprutuswesticus.network.Session;
@@ -70,6 +71,18 @@ public class PrimaryController {
                 session = new ServerSession(networkConfig, updateCallback, board);
             });
         });
+
+        networkJoinBtn.setOnAction(evt -> {
+            JoinDialog dialog = new JoinDialog();
+            Optional<NetworkConfig> result = dialog.showAndWait();
+            result.filter(networkConfig -> networkConfig.valid).ifPresent(networkConfig -> {
+                BiConsumer<Update, Board> updateCallback = (u, b) -> {
+                    b.alter(u);
+                    b.draw(canvas.getGraphicsContext2D());
+                };
+                session = new ClientSession(networkConfig, updateCallback);
+            });
+        });
     }
 
     private void loadBoardFromSpec(String specStr) {
@@ -124,6 +137,27 @@ public class PrimaryController {
             setResultConverter(btnType -> {
                 return btnType == ButtonType.CANCEL ? new NetworkConfig()
                         : new NetworkConfig("localhost", Integer.parseInt(portField.getText()), userField.getText());
+            });
+        }
+    }
+
+    class JoinDialog extends Dialog<NetworkConfig> {
+        public JoinDialog() {
+            setTitle("Join remote session...");
+            setHeaderText("");
+
+            TextField ipField = new TextField();
+            HBox ipRow = new HBox(5, new Label("IP:"), ipField);
+            TextField portField = new TextField();
+            HBox portRow = new HBox(5, new Label("Port:"), portField);
+            TextField userField = new TextField();
+            HBox userRow = new HBox(5, new Label("User:"), userField);
+            getDialogPane().setContent(new VBox(10, ipRow, portRow, userRow));
+            getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, ButtonType.OK);
+
+            setResultConverter(btnType -> {
+                return btnType == ButtonType.CANCEL ? new NetworkConfig()
+                        : new NetworkConfig(ipField.getText(), Integer.parseInt(portField.getText()), userField.getText());
             });
         }
     }

@@ -48,6 +48,7 @@ public class ClientSession extends Session {
                 final Board newBoard = (Board) fromServer.readObject();
                 Platform.runLater(() -> {
                     board = newBoard;
+                    updateCallback.accept(null, board);
                 });
 
                 boolean stopped = false;

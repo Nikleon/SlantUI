@@ -64,6 +64,9 @@ public class Board {
     }
 
     public boolean alter(Update up) {
+        if (up == null) {
+            return true;
+        }
         if (up.x >= this.height || up.y >= this.width) {
             return false;
         }
