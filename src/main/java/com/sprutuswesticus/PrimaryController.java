@@ -9,6 +9,7 @@ import com.sprutuswesticus.network.ServerSession;
 import com.sprutuswesticus.network.Session;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
@@ -20,6 +21,7 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Window;
 
 public class PrimaryController {
@@ -77,6 +79,9 @@ public class PrimaryController {
             Optional<NetworkConfig> result = dialog.showAndWait();
             result.filter(networkConfig -> networkConfig.valid).ifPresent(networkConfig -> {
                 BiConsumer<Update, Board> updateCallback = (u, b) -> {
+                    if (canvas == null) {
+                        createCanvas(b.getWidth(), b.getHeight());
+                    }
                     b.alter(u);
                     b.draw(canvas.getGraphicsContext2D());
                 };
@@ -95,8 +100,10 @@ public class PrimaryController {
 
     private void createCanvas(double w, double h) {
         double MAX_CELL = 100;
-        double MAX_WIDTH = 1500;
-        double MAX_HEIGHT = 900;
+        
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+        double MAX_WIDTH = screenBounds.getWidth() - 200;
+        double MAX_HEIGHT = screenBounds.getHeight() - 200;
 
         double max_w_cell = MAX_WIDTH / w;
         double max_h_cell = MAX_HEIGHT / h;
