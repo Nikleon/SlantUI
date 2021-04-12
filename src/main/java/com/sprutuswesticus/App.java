@@ -1,17 +1,20 @@
 package com.sprutuswesticus;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * JavaFX App
  */
 public class App extends Application {
+    public static final ArrayList<Thread> WORKER_THREADS = new ArrayList<>();
 
     private static Scene scene;
 
@@ -29,6 +32,12 @@ public class App extends Application {
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
         return fxmlLoader.load();
+    }
+
+    @Override
+    public void stop() {
+        WORKER_THREADS.forEach(Thread::interrupt);
+        System.exit(0); // TODO: This shouldn't be necessary
     }
 
     public static void main(String[] args) {
