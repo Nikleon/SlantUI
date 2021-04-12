@@ -8,7 +8,8 @@ import javafx.scene.paint.Color;
 
 public class Board implements Serializable {
     private static final long serialVersionUID = 6090317075470884294L;
-    
+
+    static final double MARGIN = 30.0;
     static final int DEFAULT_HEIGHT = 10;
     static final int DEFAULT_WIDTH = 10;
     private int height, width;
@@ -70,10 +71,10 @@ public class Board implements Serializable {
         if (up == null) {
             return true;
         }
-        if (up.x >= this.height || up.y >= this.width) {
+        if (up.r >= this.height || up.c >= this.width) {
             return false;
         }
-        this.lines[up.x][up.y] = up.orientation;
+        this.lines[up.r][up.c] = up.orientation;
         // TODO: run issue checker
         // issuecheck()
 
@@ -122,14 +123,13 @@ public class Board implements Serializable {
     }
 
     public void draw(GraphicsContext g) {
-        double MARGIN = 30.0;
         double CLUE_RADIUS = 12.0;
 
         double w_canvas = g.getCanvas().getWidth();
         double h_canvas = g.getCanvas().getHeight();
 
-        double w_cell = (w_canvas - 2*MARGIN) / width;
-        double h_cell = (h_canvas - 2*MARGIN) / height;
+        double w_cell = (w_canvas - 2 * MARGIN) / width;
+        double h_cell = (h_canvas - 2 * MARGIN) / height;
 
         // Clear bg
         g.setFill(Color.WHITE);
@@ -162,7 +162,6 @@ public class Board implements Serializable {
 
         // Draw clues
         g.setFill(Color.WHITE);
-        g.setStroke(Color.BLACK);
         for (int r = 0; r < height + 1; r++) {
             for (int c = 0; c < width + 1; c++) {
                 if (clues[r][c] == -1) {
@@ -170,10 +169,29 @@ public class Board implements Serializable {
                 }
                 double c_x = MARGIN + w_cell * c;
                 double c_y = MARGIN + h_cell * r;
-                g.fillOval(c_x - CLUE_RADIUS, c_y - CLUE_RADIUS, 2*CLUE_RADIUS, 2*CLUE_RADIUS);
-                g.strokeOval(c_x - CLUE_RADIUS, c_y - CLUE_RADIUS, 2*CLUE_RADIUS, 2*CLUE_RADIUS);
+                g.setStroke(clueIsSatisfied(r, c) ? Color.BLACK : Color.RED);
+                g.fillOval(c_x - CLUE_RADIUS, c_y - CLUE_RADIUS, 2 * CLUE_RADIUS, 2 * CLUE_RADIUS);
+                g.strokeOval(c_x - CLUE_RADIUS, c_y - CLUE_RADIUS, 2 * CLUE_RADIUS, 2 * CLUE_RADIUS);
                 g.strokeText(Integer.toString(clues[r][c]), c_x - CLUE_RADIUS + 8, c_y - CLUE_RADIUS + 16);
             }
         }
+    }
+
+    private boolean clueIsSatisfied(int r, int c) {
+        int count = 0;
+        if (r > 0 && c > 0 && lines[r - 1][c - 1] == -1) {
+            count++;
+        }
+        if (r < height && c > 0 && lines[r][c - 1] == 1) {
+            count++;
+        }
+        if (r > 0 && c < width && lines[r - 1][c] == 1) {
+            count++;
+        }
+        if (r < height && c < width && lines[r][c] == -1) {
+            count++;
+        }
+        // TODO: check unsatisfiable
+        return count <= clues[r][c];
     }
 }

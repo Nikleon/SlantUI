@@ -17,6 +17,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -120,6 +121,32 @@ public class PrimaryController {
         window.setWidth(w_final + 40);
         window.setHeight(h_final + ((MenuBar) root.getTop()).getHeight() + 60);
         window.centerOnScreen();
+
+        canvas.setOnMouseClicked(evt -> {
+            double x = (evt.getX() - Board.MARGIN) / ((w_final - 2 * Board.MARGIN) / w);
+            double y = (evt.getY() - Board.MARGIN) / ((h_final - 2 * Board.MARGIN) / h);
+            if (x < 0 || x >= w || y < 0 || y >= h) {
+                return;
+            }
+
+            int r = (int) y;
+            int c = (int) x;
+            Update update;
+            if (evt.getButton() == MouseButton.PRIMARY) {
+                update = new Update(r, c, (board.lines[r][c] - 2) % 3 + 1);
+            } else if (evt.getButton() == MouseButton.SECONDARY) {
+                update = new Update(r, c, (board.lines[r][c] + 2) % 3 - 1);
+            } else {
+                return;
+            }
+
+            if (session != null) {
+                session.enqueueUpdate(update);
+            } else {
+                board.alter(update);
+                board.draw(canvas.getGraphicsContext2D());
+            }
+        });
     }
 
     class HostDialog extends Dialog<NetworkConfig> {
@@ -157,7 +184,8 @@ public class PrimaryController {
 
             setResultConverter(btnType -> {
                 return btnType == ButtonType.CANCEL ? new NetworkConfig()
-                        : new NetworkConfig(ipField.getText(), Integer.parseInt(portField.getText()), userField.getText());
+                        : new NetworkConfig(ipField.getText(), Integer.parseInt(portField.getText()),
+                                userField.getText());
             });
         }
     }

@@ -42,5 +42,5 @@ public abstract class Session {
 
     // Client-side: send Update to server
     // Server-side: add to threadsafe queue
-    abstract void enqueueUpdate(Update update);
+    public abstract void enqueueUpdate(Update update);
 }
