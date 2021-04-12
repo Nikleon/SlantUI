@@ -51,28 +51,26 @@ public class ClientSession extends Session {
                     updateCallback.accept(null, board);
                 });
 
-                boolean stopped = false;
-                while (!stopped) {
-                    // Send all locally enqueued updates
-                    while (!unsentUpdates.isEmpty()) {
-                        toServer.writeObject(unsentUpdates.poll());
-                    }
-
-                    // Apply all remotely confirmed updates
-                    while (true) {
-                        final Update confirmedUpdate = (Update) fromServer.readObject();
-                        if (confirmedUpdate == null) {
-                            break;
+                new Thread(() -> {
+                    try {
+                        // Send all locally enqueued updates
+                        while (true) {
+                            if (unsentUpdates.isEmpty()) {
+                                continue;
+                            }
+                            toServer.writeObject(unsentUpdates.poll());
                         }
-                        Platform.runLater(() -> {
-                            updateCallback.accept(confirmedUpdate, board);
-                        });
+                    } catch (IOException e) {
                     }
+                }).start();
 
-                    // TODO: stop condition
+                // Apply all remotely confirmed updates
+                while (true) {
+                    final Update confirmedUpdate = (Update) fromServer.readObject();
+                    Platform.runLater(() -> {
+                        updateCallback.accept(confirmedUpdate, board);
+                    });
                 }
-
-                socket.close();
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
             }

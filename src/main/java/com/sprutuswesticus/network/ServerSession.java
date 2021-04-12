@@ -53,14 +53,22 @@ public class ServerSession extends Session {
 
                 boolean stopped = false;
                 while (!stopped) {
-                    // Read all partner updates
-                    Update partnerUpdate;
-                    while ((partnerUpdate = (Update) fromPartner.readObject()) != null) {
-                        pendingUpdates.add(partnerUpdate);
-                    }
+                    new Thread(() -> {
+                        try {
+                            // Read all partner updates
+                            while (true) {
+                                Update partnerUpdate = (Update) fromPartner.readObject();
+                                pendingUpdates.add(partnerUpdate);
+                            }
+                        } catch (ClassNotFoundException | IOException e) {
+                        }
+                    }).start();
 
                     // Apply and send all pending updates
-                    while (!pendingUpdates.isEmpty()) {
+                    while (true) {
+                        if (pendingUpdates.isEmpty()) {
+                            continue;
+                        }
                         final Update confirmedUpdate = pendingUpdates.poll();
                         toPartner.writeObject(confirmedUpdate);
 
