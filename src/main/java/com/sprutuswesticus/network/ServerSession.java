@@ -73,7 +73,7 @@ public class ServerSession extends Session {
                 partnerCxn.close();
                 ss.close();
             } catch (IOException | ClassNotFoundException e) {
-                System.err.println(e.getStackTrace());
+                e.printStackTrace(System.err);
             }
         };
     }

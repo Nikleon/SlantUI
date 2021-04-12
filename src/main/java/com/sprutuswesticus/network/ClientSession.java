@@ -74,7 +74,7 @@ public class ClientSession extends Session {
 
                 socket.close();
             } catch (IOException | ClassNotFoundException e) {
-                System.err.println(e.getStackTrace());
+                e.printStackTrace(System.err);
             }
         };
     }
