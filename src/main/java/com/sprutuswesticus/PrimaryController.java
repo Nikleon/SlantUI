@@ -81,7 +81,7 @@ public class PrimaryController {
             result.filter(networkConfig -> networkConfig.valid).ifPresent(networkConfig -> {
                 BiConsumer<Update, Board> updateCallback = (u, b) -> {
                     if (canvas == null) {
-                        createCanvas(b.getWidth(), b.getHeight());
+                        createCanvas(b.getWidth(), b.getHeight(), b);
                     }
                     b.alter(u);
                     b.draw(canvas.getGraphicsContext2D());
@@ -95,11 +95,12 @@ public class PrimaryController {
         board = new Board(specStr);
 
         // TODO: dynamically size canvas
-        createCanvas(board.getWidth(), board.getHeight());
+        createCanvas(board.getWidth(), board.getHeight(), board);
         board.draw(canvas.getGraphicsContext2D());
     }
 
-    private void createCanvas(double w, double h) {
+    private void createCanvas(double w, double h, Board b) {
+        board = b;
         double MAX_CELL = 100;
         
         Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
