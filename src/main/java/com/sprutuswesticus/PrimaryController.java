@@ -18,6 +18,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
 public class PrimaryController {
+    private Board board;
 
     @FXML
     private BorderPane root;
@@ -35,6 +36,7 @@ public class PrimaryController {
     private MenuItem networkLeaveBtn;
 
     public PrimaryController() {
+        board = new Board();
     }
 
     @FXML
@@ -49,7 +51,8 @@ public class PrimaryController {
             Optional<String> result = dialog.showAndWait();
             result.ifPresent(specStr -> {
                 System.out.println(specStr);
-                // TODO: call parser
+                board.specific(specStr);
+                System.out.println(board.stringifygrid());
             });
         });
 
@@ -65,7 +68,7 @@ public class PrimaryController {
 
             Optional<NetworkConfig> result = dialog.showAndWait();
             result.ifPresent(networkConfig -> {
-                NetworkSession sesh = new NetworkSession(networkConfig);
+                ;
             });
         });
     }
