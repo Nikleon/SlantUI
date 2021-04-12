@@ -1,11 +1,14 @@
 package com.sprutuswesticus;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
-public class Board {
+public class Board implements Serializable {
+    private static final long serialVersionUID = 6090317075470884294L;
+    
     static final int DEFAULT_HEIGHT = 10;
     static final int DEFAULT_WIDTH = 10;
     private int height, width;
