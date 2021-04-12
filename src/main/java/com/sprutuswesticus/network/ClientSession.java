@@ -38,8 +38,8 @@ public class ClientSession extends Session {
             try {
                 // Establish connection
                 Socket socket = new Socket(getIp(), getPort());
-                ObjectInputStream fromServer = new ObjectInputStream(socket.getInputStream());
                 ObjectOutputStream toServer = new ObjectOutputStream(socket.getOutputStream());
+                ObjectInputStream fromServer = new ObjectInputStream(socket.getInputStream());
 
                 // Send user
                 toServer.writeObject(getUser());

@@ -41,8 +41,8 @@ public class ServerSession extends Session {
                 // Establish connection
                 ServerSocket ss = new ServerSocket(getPort());
                 Socket partnerCxn = ss.accept();
-                ObjectInputStream fromPartner = new ObjectInputStream(partnerCxn.getInputStream());
                 ObjectOutputStream toPartner = new ObjectOutputStream(partnerCxn.getOutputStream());
+                ObjectInputStream fromPartner = new ObjectInputStream(partnerCxn.getInputStream());
 
                 // Read partner user
                 String partnerUser = (String) fromPartner.readObject();
