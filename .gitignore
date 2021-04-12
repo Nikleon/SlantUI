@@ -3,5 +3,3 @@
 .settings/
 
 target/
-target/classes/com/sprutuswesticus/Board.class
-target/classes/com/sprutuswesticus/PrimaryController.class
