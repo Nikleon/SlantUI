@@ -11,9 +11,11 @@ public class Board implements Serializable {
     private static final long serialVersionUID = 6090317075470884294L;
 
     static final double MARGIN = 30.0;
+    static final String DEFAULT_SPECIFIC = "12x10:d1b1b1c11a113c14c1c11f321c21a2c1a2a3a2a211b12b11a3a2a1c3a132a123b1a3e33b1221a2a22a21a1222a1a1a2b0a11a1c1a1b";
     static final int DEFAULT_HEIGHT = 10;
     static final int DEFAULT_WIDTH = 10;
 
+    private String specific;
     private int height, width;
     int[][] lines, clues;
 
@@ -25,7 +27,7 @@ public class Board implements Serializable {
     private int flatlen;
 
     public Board() {
-        this(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        this.specific(DEFAULT_SPECIFIC);
     }
 
     // empty intialization
@@ -37,7 +39,12 @@ public class Board implements Serializable {
         this.specific(spec);
     }
 
+    public String getspec() {
+        return specific;
+    }
+
     public boolean specific(String spec) {
+        this.specific = spec;
         spec = spec.trim();
         int colon = spec.indexOf(':');
         int x = spec.indexOf('x');
