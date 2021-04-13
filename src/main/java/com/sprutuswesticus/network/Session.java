@@ -1,5 +1,6 @@
 package com.sprutuswesticus.network;
 
+import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
 import com.sprutuswesticus.App;
@@ -38,6 +39,11 @@ public abstract class Session {
 
     public String getUser() {
         return user;
+    }
+
+    public void stop() {
+        App.WORKER_THREADS.forEach(Thread::interrupt);
+        System.out.println("Session has stopped.");
     }
 
     // Client-side: send Update to server

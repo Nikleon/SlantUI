@@ -89,6 +89,11 @@ public class PrimaryController {
                 session = new ClientSession(networkConfig, updateCallback);
             });
         });
+
+        networkLeaveBtn.setOnAction(evt -> {
+            session.stop();
+            session = null;
+        });
     }
 
     private void loadBoardFromSpec(String specStr) {

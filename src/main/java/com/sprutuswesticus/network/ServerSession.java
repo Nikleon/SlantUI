@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiConsumer;
 
@@ -53,16 +54,20 @@ public class ServerSession extends Session {
 
                 boolean stopped = false;
                 while (!stopped) {
-                    new Thread(() -> {
+                    Runnable subloop = () -> {
                         try {
                             // Read all partner updates
                             while (true) {
                                 Update partnerUpdate = (Update) fromPartner.readObject();
                                 pendingUpdates.add(partnerUpdate);
                             }
+                        } catch (SocketException e) {
+                            this.stop();
                         } catch (ClassNotFoundException | IOException e) {
+                            e.printStackTrace(System.err);
                         }
-                    }).start();
+                    };
+                    Session.startWorkerThread(subloop);
 
                     // Apply and send all pending updates
                     while (true) {
@@ -80,6 +85,8 @@ public class ServerSession extends Session {
 
                 partnerCxn.close();
                 ss.close();
+            } catch (SocketException e) {
+                this.stop();
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
             }

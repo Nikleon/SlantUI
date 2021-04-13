@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.BiConsumer;
 
@@ -51,7 +52,7 @@ public class ClientSession extends Session {
                     updateCallback.accept(null, board);
                 });
 
-                new Thread(() -> {
+                Runnable subloop = () -> {
                     try {
                         // Send all locally enqueued updates
                         while (true) {
@@ -60,9 +61,13 @@ public class ClientSession extends Session {
                             }
                             toServer.writeObject(unsentUpdates.poll());
                         }
+                    } catch (SocketException e) {
+                        this.stop();
                     } catch (IOException e) {
+                        e.printStackTrace(System.err);
                     }
-                }).start();
+                };
+                Session.startWorkerThread(subloop);
 
                 // Apply all remotely confirmed updates
                 while (true) {
@@ -71,6 +76,8 @@ public class ClientSession extends Session {
                         updateCallback.accept(confirmedUpdate, board);
                     });
                 }
+            } catch (SocketException e) {
+                this.stop();
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace(System.err);
             }
@@ -80,6 +87,11 @@ public class ClientSession extends Session {
     @Override
     public void enqueueUpdate(Update update) {
         unsentUpdates.add(update);
+    }
+
+    @Override
+    public void stop() {
+
     }
 
 }
