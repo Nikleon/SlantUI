@@ -1,7 +1,10 @@
 package com.sprutuswesticus;
 
 import java.io.Serializable;
+import java.net.Inet4Address;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -12,9 +15,16 @@ public class Board implements Serializable {
     static final double MARGIN = 30.0;
     static final int DEFAULT_HEIGHT = 10;
     static final int DEFAULT_WIDTH = 10;
+
     private int height, width;
-    int[][] lines;
-    int[][] clues;
+    int[][] lines, clues;
+
+    // search variables
+    private boolean[][] adj,isloop;
+    private boolean[] visited;
+    private int[] tin, low;
+    private int timer;
+    private int flatlen;
 
     public Board() {
         this(DEFAULT_WIDTH, DEFAULT_HEIGHT);
@@ -22,10 +32,7 @@ public class Board implements Serializable {
 
     // empty intialization
     public Board(int width, int height) {
-        this.height = height;
-        this.width = width;
-        this.lines = new int[height][width];
-        this.clues = new int[height + 1][width + 1];
+        initboard(width, height);
     }
 
     public Board(String spec) {
@@ -36,21 +43,13 @@ public class Board implements Serializable {
         spec = spec.trim();
         int colon = spec.indexOf(':');
         int x = spec.indexOf('x');
-        this.width = Integer.parseInt(spec.substring(0, x));
-        this.height = Integer.parseInt(spec.substring(x + 1, colon));
-        this.lines = new int[this.height][this.width];
-        this.clues = new int[this.height + 1][this.width + 1];
-        for (int[] row : clues) {
-            Arrays.fill(row, -1);
-        }
-
+        initboard(Integer.parseInt(spec.substring(0, x)), Integer.parseInt(spec.substring(0, x)));
         int row = 0;
         int col = 0;
         for (int cur = colon + 1; cur < spec.length(); cur++) {
             char c = spec.charAt(cur);
             if (c >= '0' && c <= '4') {
-                this.clues[row][col] = c - '0';
-                col++;
+                this.clues[row][col++] = c - '0';
             } else if (c >= 'a' && c <= 'z') {
                 col += c - 96;
             } else {
@@ -67,6 +66,29 @@ public class Board implements Serializable {
         return true;
     }
 
+    // Initialize empty values of board with width and height
+    private boolean initboard(int width, int height) {
+        if (width > 0 && height > 0) {
+            this.width = width;
+            this.height = height;
+            this.lines = new int[this.height][this.width];
+            this.clues = new int[this.height + 1][this.width + 1];
+            for (int[] row : this.clues) {
+                Arrays.fill(row, -1);
+            }
+
+            this.isloop = new boolean[this.height][this.width];
+
+            this.flatlen = (width + 1) * (height + 1);
+            this.adj = new boolean[this.flatlen][4];
+            this.visited = new boolean[this.flatlen];
+            this.tin = new int[this.flatlen];
+            this.low = new int[this.flatlen];
+            return true;
+        }
+        return false;
+    }
+
     public boolean alter(Update up) {
         if (up == null) {
             return true;
@@ -75,8 +97,26 @@ public class Board implements Serializable {
             return false;
         }
         this.lines[up.r][up.c] = up.orientation;
+        // update adjacency array
+        int flat = (up.r * (width + 1)) + up.c;
+        if (up.orientation == -1) {
+            adj[flat][3] = true;
+            adj[flat + 1][2] = false;
+            adj[flat + width + 1][1] = false;
+            adj[flat + width + 2][0] = true;
+        } else if (up.orientation == 1) {
+            adj[flat][3] = false;
+            adj[flat + 1][2] = true;
+            adj[flat + width + 1][1] = true;
+            adj[flat + width + 2][0] = false;
+        } else {
+            adj[flat][3] = false;
+            adj[flat + 1][2] = false;
+            adj[flat + width + 1][1] = false;
+            adj[flat + width + 2][0] = false;
+        }
         // TODO: run issue checker
-        // issuecheck()
+        issuecheck(up);
 
         return true;
     }
@@ -87,12 +127,43 @@ public class Board implements Serializable {
         return false;
     }
 
-    // perform bfs for the loop
-    private Node loopcheck(Update up) {
-        return null;
+
+    // perform dfs bridge find algo
+    private void loopcheck(Update up) {
+        Arrays.fill(this.visited, false);
+        Arrays.fill(this.tin, -1);
+        Arrays.fill(this.low, -1);
+        this.timer = 0;
+        for (int i = 0; i < flatlen; i++) {
+            if (!visited[i]) {
+                bridge_dfs(i, -1);
+            }
+        }
     }
 
-    private class Node {
+    private void bridge_dfs(int v, int p) {
+        visited[v] = true;
+        tin[v] = low[v] = timer++;
+        int to;
+        for (int i = 0; i < 4; i++) {
+            if (adj[v][i]) {
+                to = v + (i % 2) * 2 + (i < 2 ? -(this.width + 2) : this.width);
+                if (to == p){
+                    continue;
+                }
+                if (visited[to]) {
+                    low[v] = Math.min(low[v], tin[to]);
+                    isloop[Math.min(v/(width+1), to/(width+1))][Math.min(v%(width+1), to%(width+1))] 
+                    = true;
+                }else{
+                    bridge_dfs(to, v);
+                    low[v] = Math.min(low[v], low[to]);
+                    isloop[Math.min(v/(width+1), to/(width+1))][Math.min(v%(width+1), to%(width+1))] 
+                    = (low[to] <= tin[v]);
+                }
+
+            }
+        }
 
     }
 
@@ -152,6 +223,7 @@ public class Board implements Serializable {
             for (int c = 0; c < width; c++) {
                 double x = MARGIN + w_cell * c;
                 double y = MARGIN + h_cell * r;
+                g.setStroke(this.isloop[r][c] ? Color.RED: Color.BLACK);
                 if (lines[r][c] == -1) {
                     g.strokeLine(x, y, x + w_cell, y + h_cell);
                 } else if (lines[r][c] == 1) {
