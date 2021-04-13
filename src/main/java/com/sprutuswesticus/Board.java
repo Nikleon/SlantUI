@@ -251,19 +251,39 @@ public class Board implements Serializable {
 
     private boolean clueIsSatisfied(int r, int c) {
         int count = 0;
-        if (r > 0 && c > 0 && lines[r - 1][c - 1] == -1) {
-            count++;
+        int maxcount = 0;
+        if (r > 0 && c > 0) {
+            if(lines[r - 1][c - 1] == -1){
+                count++;
+                maxcount++;
+            }else if(lines[r-1][c-1] == 0){
+                maxcount++;
+            }
         }
-        if (r < height && c > 0 && lines[r][c - 1] == 1) {
-            count++;
+        if (r < height && c > 0) {
+            if(lines[r][c - 1] == 1){
+                count++;
+                maxcount++;
+            }else if(lines[r][c-1] == 0){
+                maxcount++;
+            }
         }
-        if (r > 0 && c < width && lines[r - 1][c] == 1) {
-            count++;
+        if (r > 0 && c < width) {
+            if(lines[r - 1][c] == 1){
+                count++;
+                maxcount++;
+            }else if(lines[r-1][c] == 0){
+                maxcount++;
+            }
         }
-        if (r < height && c < width && lines[r][c] == -1) {
-            count++;
+        if (r < height && c < width) {
+            if(lines[r][c] == -1){
+                count++;
+                maxcount++;
+            }else if(lines[r][c] == 0){
+                maxcount++;
+            }
         }
-        // TODO: check unsatisfiable
-        return count <= clues[r][c];
+        return count <= clues[r][c] && maxcount >= clues[r][c];
     }
 }
