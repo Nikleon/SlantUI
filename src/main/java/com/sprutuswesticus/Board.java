@@ -2,9 +2,7 @@ package com.sprutuswesticus;
 
 import java.io.Serializable;
 import java.net.Inet4Address;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -43,7 +41,7 @@ public class Board implements Serializable {
         spec = spec.trim();
         int colon = spec.indexOf(':');
         int x = spec.indexOf('x');
-        initboard(Integer.parseInt(spec.substring(0, x)), Integer.parseInt(spec.substring(0, x)));
+        initboard(Integer.parseInt(spec.substring(0, x)), Integer.parseInt(spec.substring(x+1,colon)));
         int row = 0;
         int col = 0;
         for (int cur = colon + 1; cur < spec.length(); cur++) {
@@ -129,6 +127,7 @@ public class Board implements Serializable {
 
 
     // perform dfs bridge find algo
+    //TODO: Call bridge_dfs only on 4 corners of the updated line
     private void loopcheck(Update up) {
         Arrays.fill(this.visited, false);
         Arrays.fill(this.tin, -1);
