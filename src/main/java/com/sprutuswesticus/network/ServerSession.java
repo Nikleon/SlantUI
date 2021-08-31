@@ -37,20 +37,27 @@ public class ServerSession extends Session {
      * partner, and passes all updates to app thread for processing
      */
     private Runnable makeWorker() {
+        final int numCxns = 2;
         return () -> {
             try {
                 // Establish connection
-                ServerSocket ss = new ServerSocket(getPort());
-                Socket partnerCxn = ss.accept();
-                ObjectOutputStream toPartner = new ObjectOutputStream(partnerCxn.getOutputStream());
-                ObjectInputStream fromPartner = new ObjectInputStream(partnerCxn.getInputStream());
+                ServerSocket[] sss = new ServerSocket[numCxns];
+                Socket[] partnerCxns = new Socket[numCxns];
+                ObjectOutputStream[] toPartners = new ObjectOutputStream[numCxns];
+                ObjectInputStream[] fromPartners = new ObjectInputStream[numCxns];
+                for (int i = 0; i < numCxns; i++) {
+                    sss[i] = new ServerSocket(getPort());
+                    partnerCxns[i] = sss[i].accept();
+                    toPartners[i] = new ObjectOutputStream(partnerCxns[i].getOutputStream());
+                    fromPartners[i] = new ObjectInputStream(partnerCxns[i].getInputStream());
 
-                // Read partner user
-                String partnerUser = (String) fromPartner.readObject();
-                System.out.format("Partner %s has joined the session.\n", partnerUser);
+                    // Read partner user
+                    String partnerUser = (String) fromPartners[i].readObject();
+                    System.out.format("Partner %s has joined the session.\n", partnerUser);
 
-                // Send board
-                toPartner.writeObject(board);
+                    // Send board
+                    toPartners[i].writeObject(board);
+                }
 
                 boolean stopped = false;
                 while (!stopped) {
@@ -58,8 +65,10 @@ public class ServerSession extends Session {
                         try {
                             // Read all partner updates
                             while (true) {
-                                Update partnerUpdate = (Update) fromPartner.readObject();
-                                pendingUpdates.add(partnerUpdate);
+                                for (ObjectInputStream fromPartner : fromPartners) {
+                                    Update partnerUpdate = (Update) fromPartner.readObject();
+                                    pendingUpdates.add(partnerUpdate);
+                                }
                             }
                         } catch (SocketException e) {
                             this.stop();
@@ -75,7 +84,9 @@ public class ServerSession extends Session {
                             continue;
                         }
                         final Update confirmedUpdate = pendingUpdates.poll();
-                        toPartner.writeObject(confirmedUpdate);
+                        for (ObjectOutputStream toPartner : toPartners) {
+                            toPartner.writeObject(confirmedUpdate);
+                        }
 
                         Platform.runLater(() -> {
                             updateCallback.accept(confirmedUpdate, board);
@@ -83,8 +94,10 @@ public class ServerSession extends Session {
                     }
                 }
 
-                partnerCxn.close();
-                ss.close();
+                for (int i = 0; i < numCxns; i++) {
+                    partnerCxns[i].close();
+                    sss[i].close();
+                }
             } catch (SocketException e) {
                 this.stop();
             } catch (IOException | ClassNotFoundException e) {
