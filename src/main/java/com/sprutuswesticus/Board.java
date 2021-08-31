@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 
 public class Board implements Serializable {
     private static final long serialVersionUID = 6090317075470884294L;
@@ -200,7 +201,7 @@ public class Board implements Serializable {
     }
 
     public void draw(GraphicsContext g) {
-        double CLUE_RADIUS = 12.0;
+        double CLUE_RADIUS = 10.0;
 
         double w_canvas = g.getCanvas().getWidth();
         double h_canvas = g.getCanvas().getHeight();
@@ -209,11 +210,12 @@ public class Board implements Serializable {
         double h_cell = (h_canvas - 2 * MARGIN) / height;
 
         // Clear bg
-        g.setFill(Color.WHITE);
+        g.setFill(Color.rgb(43, 45, 66));
         g.fillRect(0, 0, w_canvas, h_canvas);
 
         // Draw bg grid
         g.setStroke(Color.LIGHTGRAY);
+        g.setLineWidth(1.0);
         for (int c = 0; c < width + 1; c++) {
             double x = MARGIN + w_cell * c;
             g.strokeLine(x, MARGIN, x, h_canvas - MARGIN);
@@ -224,22 +226,33 @@ public class Board implements Serializable {
         }
 
         // Draw lines
-        g.setStroke(Color.BLACK);
         for (int r = 0; r < height; r++) {
             for (int c = 0; c < width; c++) {
                 double x = MARGIN + w_cell * c;
                 double y = MARGIN + h_cell * r;
-                g.setStroke(this.isloop[r][c] ? Color.RED: Color.BLACK);
+                g.setStroke(Color.WHITE);
+                g.setLineWidth(2.0);
                 if (lines[r][c] == -1) {
                     g.strokeLine(x, y, x + w_cell, y + h_cell);
                 } else if (lines[r][c] == 1) {
                     g.strokeLine(x, y + h_cell, x + w_cell, y);
+                }
+                if (this.isloop[r][c]) {
+                    g.setStroke(Color.RED);
+                    g.setLineWidth(1.5);
+                    if (lines[r][c] == -1) {
+                        g.strokeLine(x, y, x + w_cell, y + h_cell);
+                    } else if (lines[r][c] == 1) {
+                        g.strokeLine(x, y + h_cell, x + w_cell, y);
+                    }
                 }
             }
         }
 
         // Draw clues
         g.setFill(Color.WHITE);
+        g.setLineWidth(1.0);
+        g.setFont(Font.font("Comic Sans MS", 12.0));
         for (int r = 0; r < height + 1; r++) {
             for (int c = 0; c < width + 1; c++) {
                 if (clues[r][c] == -1) {
@@ -250,7 +263,7 @@ public class Board implements Serializable {
                 g.setStroke(clueIsSatisfied(r, c) ? Color.BLACK : Color.RED);
                 g.fillOval(c_x - CLUE_RADIUS, c_y - CLUE_RADIUS, 2 * CLUE_RADIUS, 2 * CLUE_RADIUS);
                 g.strokeOval(c_x - CLUE_RADIUS, c_y - CLUE_RADIUS, 2 * CLUE_RADIUS, 2 * CLUE_RADIUS);
-                g.strokeText(Integer.toString(clues[r][c]), c_x - CLUE_RADIUS + 8, c_y - CLUE_RADIUS + 16);
+                g.strokeText(Integer.toString(clues[r][c]), c_x - CLUE_RADIUS + 6, c_y - CLUE_RADIUS + 14);
             }
         }
     }

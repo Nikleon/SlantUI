@@ -41,13 +41,12 @@ public class ServerSession extends Session {
         return () -> {
             try {
                 // Establish connection
-                ServerSocket[] sss = new ServerSocket[numCxns];
+                ServerSocket ss = new ServerSocket(getPort());
                 Socket[] partnerCxns = new Socket[numCxns];
                 ObjectOutputStream[] toPartners = new ObjectOutputStream[numCxns];
                 ObjectInputStream[] fromPartners = new ObjectInputStream[numCxns];
                 for (int i = 0; i < numCxns; i++) {
-                    sss[i] = new ServerSocket(getPort());
-                    partnerCxns[i] = sss[i].accept();
+                    partnerCxns[i] = ss.accept();
                     toPartners[i] = new ObjectOutputStream(partnerCxns[i].getOutputStream());
                     fromPartners[i] = new ObjectInputStream(partnerCxns[i].getInputStream());
 
@@ -61,22 +60,22 @@ public class ServerSession extends Session {
 
                 boolean stopped = false;
                 while (!stopped) {
-                    Runnable subloop = () -> {
-                        try {
-                            // Read all partner updates
-                            while (true) {
-                                for (ObjectInputStream fromPartner : fromPartners) {
+                    for (ObjectInputStream fromPartner : fromPartners) {
+                        Runnable subloop = () -> {
+                            try {
+                                // Read all partner updates
+                                while (true) {
                                     Update partnerUpdate = (Update) fromPartner.readObject();
                                     pendingUpdates.add(partnerUpdate);
                                 }
+                            } catch (SocketException e) {
+                                this.stop();
+                            } catch (ClassNotFoundException | IOException e) {
+                                e.printStackTrace(System.err);
                             }
-                        } catch (SocketException e) {
-                            this.stop();
-                        } catch (ClassNotFoundException | IOException e) {
-                            e.printStackTrace(System.err);
-                        }
-                    };
-                    Session.startWorkerThread(subloop);
+                        };
+                        Session.startWorkerThread(subloop);
+                    }
 
                     // Apply and send all pending updates
                     while (true) {
@@ -96,8 +95,8 @@ public class ServerSession extends Session {
 
                 for (int i = 0; i < numCxns; i++) {
                     partnerCxns[i].close();
-                    sss[i].close();
                 }
+                ss.close();
             } catch (SocketException e) {
                 this.stop();
             } catch (IOException | ClassNotFoundException e) {
