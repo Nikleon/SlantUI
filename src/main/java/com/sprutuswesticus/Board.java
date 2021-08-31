@@ -250,7 +250,7 @@ public class Board implements Serializable {
         }
 
         // Draw clues
-        g.setFill(Color.WHITE);
+        g.setFill(Color.LIGHTSLATEGRAY);
         g.setLineWidth(1.0);
         g.setFont(Font.font("Comic Sans MS", 12.0));
         for (int r = 0; r < height + 1; r++) {
