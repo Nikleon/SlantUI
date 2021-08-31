@@ -17,9 +17,9 @@ public class Board implements Serializable {
 
     private String specific;
     private int height, width;
-    int[][] lines, clues;
+    int[][] lines, solu, clues;
 
-    // search variables
+    // search/result variables
     private boolean[][] adj,isloop;
     private boolean[] visited;
     private int[] tin, low;
@@ -44,8 +44,8 @@ public class Board implements Serializable {
     }
 
     public boolean specific(String spec) {
-        this.specific = spec;
         spec = spec.trim();
+        this.specific = spec;
         int colon = spec.indexOf(':');
         int x = spec.indexOf('x');
         initboard(Integer.parseInt(spec.substring(0, x)), Integer.parseInt(spec.substring(x+1,colon)));
@@ -77,6 +77,7 @@ public class Board implements Serializable {
             this.width = width;
             this.height = height;
             this.lines = new int[this.height][this.width];
+            this.solu = new int[this.height][this.width];
             this.clues = new int[this.height + 1][this.width + 1];
             for (int[] row : this.clues) {
                 Arrays.fill(row, -1);
@@ -167,7 +168,6 @@ public class Board implements Serializable {
                     isloop[Math.min(v/(width+1), to/(width+1))][Math.min(v%(width+1), to%(width+1))] 
                     = (low[to] <= tin[v]);
                 }
-
             }
         }
 
@@ -255,7 +255,7 @@ public class Board implements Serializable {
         }
     }
 
-    private boolean clueIsSatisfied(int r, int c) {
+    private boolean clueIsSatisfied(int r, int c) { 
         int count = 0;
         int maxcount = 0;
         if (r > 0 && c > 0) {
@@ -291,5 +291,25 @@ public class Board implements Serializable {
             }
         }
         return count <= clues[r][c] && maxcount >= clues[r][c];
+    }
+
+    
+    private void generate_solu(int width, int height, int difficulty){
+        int[][] sets = new int[height + 1][width + 1];
+        initboard(width, height);
+        boolean us, ds;
+        for(int r =0; r < height + 1; r++) {
+            for(int c = 0; c < width + 1; c++) {
+                sets[r][c] = r*(width + 1) + c;
+            }
+        }
+        for(int r = 0; r < height; r++) {
+            for(int c = 0; c < width; c++) {
+                ds = sets[r][c] == sets[r+1][c+1];
+                us = sets[r+1][c] == sets[r][c+1];
+                assert !(ds && us);
+            }
+        }
+        
     }
 }
