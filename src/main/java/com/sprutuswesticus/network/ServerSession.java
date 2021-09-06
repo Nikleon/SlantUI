@@ -37,7 +37,7 @@ public class ServerSession extends Session {
      * partner, and passes all updates to app thread for processing
      */
     private Runnable makeWorker() {
-        final int numCxns = 2;
+        final int numCxns = 3;
         return () -> {
             try {
                 // Establish connection

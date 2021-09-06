@@ -19,9 +19,10 @@ public class Board implements Serializable {
     private String specific;
     private int height, width;
     int[][] lines, solu, clues;
+    private int issues;
 
     // search/result variables
-    private boolean[][] adj,isloop;
+    private boolean[][] adj,isloop, satisfiable;
     private boolean[] visited;
     private int[] tin, low;
     private int timer;
@@ -42,6 +43,10 @@ public class Board implements Serializable {
 
     public String getspec() {
         return specific;
+    }
+
+    public int getIssue() {
+        return issues;
     }
 
     public boolean specific(String spec) {
@@ -83,7 +88,10 @@ public class Board implements Serializable {
             for (int[] row : this.clues) {
                 Arrays.fill(row, -1);
             }
-
+            this.satisfiable = new boolean[this.height + 1][this.width + 1];
+            for (boolean[] row : this.satisfiable) {
+                Arrays.fill(row, true);
+            }
             this.isloop = new boolean[this.height][this.width];
 
             this.flatlen = (width + 1) * (height + 1);
@@ -91,6 +99,7 @@ public class Board implements Serializable {
             this.visited = new boolean[this.flatlen];
             this.tin = new int[this.flatlen];
             this.low = new int[this.flatlen];
+            this.issues = width * height;
             return true;
         }
         return false;
@@ -103,33 +112,35 @@ public class Board implements Serializable {
         if (up.r >= this.height || up.c >= this.width) {
             return false;
         }
+        if(this.lines[up.r][up.c] == up.orientation) return true;
+        if(up.orientation == 0) {
+            this.issues += this.isloop[up.r][up.c] ? 0: 1;
+            this.isloop[up.r][up.c] = false;
+        }
+
+        this.issues += this.lines[up.r][up.c] == 0 ? -1: 0;
+
         this.lines[up.r][up.c] = up.orientation;
         // update adjacency array
         int flat = (up.r * (width + 1)) + up.c;
-        if (up.orientation == -1) {
-            adj[flat][3] = true;
-            adj[flat + 1][2] = false;
-            adj[flat + width + 1][1] = false;
-            adj[flat + width + 2][0] = true;
-        } else if (up.orientation == 1) {
-            adj[flat][3] = false;
-            adj[flat + 1][2] = true;
-            adj[flat + width + 1][1] = true;
-            adj[flat + width + 2][0] = false;
-        } else {
-            adj[flat][3] = false;
-            adj[flat + 1][2] = false;
-            adj[flat + width + 1][1] = false;
-            adj[flat + width + 2][0] = false;
-        }
+        
+        adj[flat][3] = up.orientation == -1;
+        adj[flat + 1][2] = up.orientation == 1;
+        adj[flat + width + 1][1] = up.orientation == 1;
+        adj[flat + width + 2][0] = up.orientation == -1;
         // TODO: run issue checker
         issuecheck(up);
-
+        
+        System.out.println(this.issues);
         return true;
     }
 
     // todo make it return an update of wrong objects
     private boolean issuecheck(Update up) {
+        clueIsSatisfiable(up.r, up.c);
+        clueIsSatisfiable(up.r, up.c + 1);
+        clueIsSatisfiable(up.r + 1, up.c);
+        clueIsSatisfiable(up.r + 1, up.c + 1);
         loopcheck(up);
         return false;
     }
@@ -159,15 +170,18 @@ public class Board implements Serializable {
                 if (to == p){
                     continue;
                 }
+                int r = Math.min(v/(width+1), to/(width+1));
+                int c = Math.min(v%(width+1), to%(width+1));
+                
+                this.issues += this.isloop[r][c] ? 0 : 1;
                 if (visited[to]) {
                     low[v] = Math.min(low[v], tin[to]);
-                    isloop[Math.min(v/(width+1), to/(width+1))][Math.min(v%(width+1), to%(width+1))] 
-                    = true;
+                    isloop[r][c] = true;
                 }else{
                     bridge_dfs(to, v);
                     low[v] = Math.min(low[v], low[to]);
-                    isloop[Math.min(v/(width+1), to/(width+1))][Math.min(v%(width+1), to%(width+1))] 
-                    = (low[to] <= tin[v]);
+                    isloop[r][c] = (low[to] <= tin[v]);
+                    this.issues += this.isloop[r][c] ? 0 : -1;
                 }
             }
         }
@@ -182,7 +196,7 @@ public class Board implements Serializable {
         }
         return out;
     }
-
+    
     public String stringifygrid() {
         String out = "";
         for (int[] row : this.clues) {
@@ -260,7 +274,7 @@ public class Board implements Serializable {
                 }
                 double c_x = MARGIN + w_cell * c;
                 double c_y = MARGIN + h_cell * r;
-                g.setStroke(clueIsSatisfied(r, c) ? Color.BLACK : Color.RED);
+                g.setStroke(satisfiable[r][c] ? Color.BLACK : Color.RED);
                 g.fillOval(c_x - CLUE_RADIUS, c_y - CLUE_RADIUS, 2 * CLUE_RADIUS, 2 * CLUE_RADIUS);
                 g.strokeOval(c_x - CLUE_RADIUS, c_y - CLUE_RADIUS, 2 * CLUE_RADIUS, 2 * CLUE_RADIUS);
                 g.strokeText(Integer.toString(clues[r][c]), c_x - CLUE_RADIUS + 6, c_y - CLUE_RADIUS + 14);
@@ -268,7 +282,8 @@ public class Board implements Serializable {
         }
     }
 
-    private boolean clueIsSatisfied(int r, int c) { 
+    private boolean clueIsSatisfiable(int r, int c) { 
+        if(this.clues[r][c] == -1) return true;
         int count = 0;
         int maxcount = 0;
         if (r > 0 && c > 0) {
@@ -303,7 +318,11 @@ public class Board implements Serializable {
                 maxcount++;
             }
         }
-        return count <= clues[r][c] && maxcount >= clues[r][c];
+        this.issues += this.satisfiable[r][c] ? 0: -1;
+        boolean ret = count <= clues[r][c] && maxcount >= clues[r][c];
+        this.satisfiable[r][c] = ret;
+        this.issues += ret ? 0 : 1;
+        return ret;
     }
 
     
