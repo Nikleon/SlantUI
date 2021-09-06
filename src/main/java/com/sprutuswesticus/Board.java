@@ -16,6 +16,7 @@ public class Board implements Serializable {
     static final int DEFAULT_HEIGHT = 10;
     static final int DEFAULT_WIDTH = 10;
 
+
     private String specific;
     private int height, width;
     int[][] lines, solu, clues;
@@ -224,7 +225,7 @@ public class Board implements Serializable {
         double h_cell = (h_canvas - 2 * MARGIN) / height;
 
         // Clear bg
-        g.setFill(Color.rgb(43, 45, 66));
+        g.setFill(issues != 0 ? Color.rgb(43, 45, 66) : Color.rgb(43, 45, 66).darker());
         g.fillRect(0, 0, w_canvas, h_canvas);
 
         // Draw bg grid
@@ -264,7 +265,7 @@ public class Board implements Serializable {
         }
 
         // Draw clues
-        g.setFill(Color.LIGHTSLATEGRAY);
+        g.setFill(issues != 0 ? Color.LIGHTSLATEGRAY : Color.LIGHTSLATEGRAY.darker());
         g.setLineWidth(1.0);
         g.setFont(Font.font("Comic Sans MS", 12.0));
         for (int r = 0; r < height + 1; r++) {
